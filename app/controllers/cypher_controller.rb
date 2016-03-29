@@ -3,7 +3,7 @@ class CypherController < ApplicationController
   protect_from_forgery except: :decrypt
 
   def encrypt
-    result = {is_succeed: false, msg: ""}
+    result = {is_succeed: false}
     me = User.find_by(access_key: params["access_key"])
     to_whom = User.find_by(username: params["to_whom"])
     plain_text = params["plain_text"]
@@ -15,15 +15,15 @@ class CypherController < ApplicationController
       result[:msg] = "Please Login!"
     else
       key_pair = RSA::KeyPair.new(me_private_key, to_whom_public_key)
+      result[:from_whom] = me.username
       result[:signature] = Base64.encode64(key_pair.sign(plain_text))
       result[:cypher] =  Base64.encode64(key_pair.encrypt(plain_text))
-      result[:msg] = "Encrypt finished!"
       result[:is_succeed] = true
     end
     render :json => result
   end
   def decrypt
-    result = {is_succeed: false, msg: ""}
+    result = {is_succeed: false}
     signature = Base64.decode64(params['signature'])
     cypher = Base64.decode64(params['cypher'])
     me = User.find_by(access_key: params["access_key"])
@@ -41,7 +41,6 @@ class CypherController < ApplicationController
       if(key_pair.verify(signature,result[:plain_text]))
         result[:is_succeed] = true
         result[:signature_status] = true
-        result[:msg] = "Decrypt finished!"
       else
         result[:signature_status] = false
         result[:msg] = "Something wrong! Please retry again."
