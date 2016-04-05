@@ -47,6 +47,7 @@ class CypherController < ApplicationController
         result.delete(:plain_text)
       end
     end
+    result[:plain_text]=result[:plain_text].force_encoding("utf-8")
     render :json => result
   end
 end
